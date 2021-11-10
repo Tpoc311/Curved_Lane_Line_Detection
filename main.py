@@ -1,15 +1,30 @@
+"""
+DESCRIPTION
+    This module - is a main module containing a high-level methods and functions
+    to implement Advanced Lane Line Detection.
+"""
+
+import sys
+
 import cv2
 import numpy as np
 
 from utils import undistort, perspective_warp, sliding_window, draw_lanes
 
 
-def filter_sobel(img):
+def filter_sobel(img: np.ndarray) -> np.ndarray:
+    """
+    Filters image to get only required lane lines.
+    :param img: image to filter
+    :return: filtered image
+    """
     hls = cv2.cvtColor(img, cv2.COLOR_RGB2HLS).astype(np.float)
     sobelx = cv2.Sobel(hls[:, :, 1], cv2.CV_64F, 1, 1)  # Take the derivative in x
-    abs_sobelx = np.absolute(sobelx)  # Absolute x derivative to accentuate lines away from horizontal
-    max = np.max(abs_sobelx)
-    scaled_sobel = np.uint8(255 * abs_sobelx / max)
+
+    # Absolute x derivative to accentuate lines away from horizontal
+    abs_sobelx = np.absolute(sobelx)
+    max_sobel = np.max(abs_sobelx)
+    scaled_sobel = np.uint8(255 * abs_sobelx / max_sobel)
 
     s_thresh = (100, 255)
     sx_thresh = (15, 255)
@@ -20,12 +35,10 @@ def filter_sobel(img):
     s_binary = np.zeros_like(s_channel)
     s_binary[(s_channel >= s_thresh[0]) & (s_channel <= s_thresh[1])] = 1
 
-    filtered_image = np.zeros_like(sxbinary)
-    filtered_image[(s_binary == 1) | (sxbinary == 1)] = 1
+    filtered = np.zeros_like(sxbinary)
+    filtered[(s_binary == 1) | (sxbinary == 1)] = 1
 
-    # filtered_image = cv2.bitwise_and(filtered_image, filtered_image, mask=mask)
-
-    return filtered_image
+    return filtered
 
 
 if __name__ == '__main__':
@@ -41,7 +54,7 @@ if __name__ == '__main__':
         ret, original_image = cap.read()
 
         if not ret:
-            exit()
+            sys.exit()
 
         original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
         undistorted_image = undistort(original_image)
@@ -62,5 +75,5 @@ if __name__ == '__main__':
         cv2.imshow('result', img_)
 
         if cv2.waitKey(1) & 0xff == ord('q'):
-            exit()
+            sys.exit()
     print('Success')
